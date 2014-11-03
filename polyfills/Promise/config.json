@@ -11,6 +11,7 @@
     "chrome": "21 - 32",
     "firefox": "21"
   },
+  "license": "Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)\nLicensed under MIT license.\nSee https://raw.githubusercontent.com/jakearchibald/es6-promise/master/LICENSE",
   "aliases": [
     "modernizr:promises",
     "caniuse:promises"
