@@ -1,19 +1,20 @@
+'use strict';
+
 var polyfillio = require('../lib'),
 	express = require('express'),
+	exphbs = require('express-handlebars'),
 	app = express().enable("strict routing"),
 	packagejson = require('../package.json'),
 	origamijson = require('../origami.json'),
 	PolyfillSet = require('./PolyfillSet'),
 	path = require('path'),
-	fs = require('fs'),
 	parseArgs = require('minimist'),
 	ServiceMetrics = require('./metrics'),
 	fs = require('fs'),
 	testing = require('./testing'),
 	docs = require('./docs'),
+	helpers = require('./helpers'),
 	appVersion = fs.existsSync('./.semver') ? fs.readFileSync('./.semver', {encoding:'UTF-8'}).replace(/\s+$/, '') : 'Unknown';
-
-'use strict';
 
 require('es6-promise').polyfill();
 
@@ -26,6 +27,16 @@ var port = argv.port || Number(process.env.PORT) || 3000,
 var one_day = 60 * 60 * 24;
 var one_week = one_day * 7;
 var one_year = one_day * 365;
+
+app.engine('.html', exphbs({
+	defaultLayout: 'main',
+	layoutsDir: path.resolve('docs/layouts/'),
+	partialsDir: path.resolve('docs/partials/'),
+	helpers: helpers,
+	extname: '.html'
+}));
+app.set('view engine', '.html');
+app.set('views', path.resolve('docs/'));
 
 // Default cache control policy
 app.use(function(req, res, next) {
@@ -44,8 +55,7 @@ app.get(/\/test\/director\/?$/, testing.createEndpoint('director', polyfillio));
 app.get(/\/test\/tests\/?$/, testing.createEndpoint('runner', polyfillio));
 
 /* Documentation and version routing */
-
-app.get(/^\/(?:v1(?:\/(?:docs\/?(?:([^\/]+)\/?)?)?)?)?$/, docs.route);
+app.use('/v1/docs/', docs);
 app.use('/v1/docs/assets', express.static(__dirname + '/../docs/assets'));
 
 
@@ -143,11 +153,15 @@ app.get(/^\/v1\/polyfill(\.\w+)(\.\w+)?/, function(req, res) {
 		flags = req.query.flags ? req.query.flags.split(',') : [];
 
 	// Backwards compatibility
-	if (req.query.gated) flags.push('gated');
+	if (req.query.gated) {
+		flags.push('gated');
+	}
 
 	var polyfills = PolyfillSet.fromQueryParam(req.query.features || 'default', flags);
 
-	if (!req.query.ua) res.set('Vary', 'User-Agent');
+	if (!req.query.ua) {
+		res.set('Vary', 'User-Agent');
+	}
 
 	if (!uaString) {
 		res.status(400);
