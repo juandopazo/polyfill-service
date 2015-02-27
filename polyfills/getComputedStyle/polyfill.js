@@ -45,6 +45,8 @@
 		},
 		property;
 
+		style.length = 0;
+
 		for (property in currentStyle) {
 			Array.prototype.push.call(style, property == 'styleFloat' ? 'float' : property.replace(/[A-Z]/, unCamelCase));
 
